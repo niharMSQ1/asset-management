@@ -1,5 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-@_xgtip=@)ou&ag0^j2a3(+fk1%8euma@k&rz7&7-@jep5cgo&'
@@ -8,6 +10,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+DATABASE_ROUTERS = ['itsmOperations.routers.ServiceNowRouter']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -18,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'users',
+    'servicenow',
 
     'rest_framework',
     'rest_framework_simplejwt',
@@ -56,11 +60,18 @@ WSGI_APPLICATION = 'itsmOperations.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': config('DEFAULT_ENGINE'),
+        'NAME': BASE_DIR / config('DEFAULT_NAME'),
+    },
+    'servicenow': {
+        'ENGINE': config('ENGINE'),
+        'NAME': config('SERVICENOW_DB_NAME'),
+        'USER': config('USER'),
+        'PASSWORD': config('PASSWORD'),
+        'HOST': config('HOST'),
+        'PORT': config('PORT'),
+    },
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -105,5 +116,10 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': 'your-secret-key-here',
+    'SIGNING_KEY': config('SIGNING_KEY'),
 }
+
+SERVICENOW_URL = config('SERVICENOW_URL')
+SERVICENOW_USER = config('SERVICENOW_USER')
+SERVICENOW_PASSWORD = config('SERVICENOW_PASSWORD')
+SERVICENOW_TABLE = "alm_hardware" 
