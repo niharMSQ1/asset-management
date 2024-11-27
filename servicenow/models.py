@@ -1,18 +1,18 @@
 from django.db import models
 
 class HardwareAssetsServiceNow(models.Model):
-    inventory_number = models.CharField(max_length=50, unique=True)
-    condition = models.CharField(max_length=20)
-    item_name = models.CharField(max_length=100)
-    category = models.CharField(max_length=50)
-    location = models.CharField(max_length=100)
-    warranty_info = models.CharField(max_length=100)
-    serial_number = models.CharField(max_length=50, unique=True)
+    inventory_number = models.CharField(max_length=255, unique=True)
+    condition = models.CharField(max_length=255)
+    item_name = models.CharField(max_length=255)
+    category = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    warranty_info = models.CharField(max_length=255)
+    serial_number = models.CharField(max_length=255, unique=False)
 
     bank_loan = models.BooleanField(default=False)
-    purchase_date = models.DateField()
+    purchase_date = models.DateField(null=True, blank=True)
     expected_life_years = models.PositiveIntegerField()
-    asset_end_date = models.DateField()
+    asset_end_date = models.DateField(null=True, blank=True)
     months_to_replace = models.PositiveIntegerField()
     three_month_end_alert = models.BooleanField(default=False)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
