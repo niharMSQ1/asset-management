@@ -9,8 +9,10 @@ from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt
 from pymongo import MongoClient
 
+import json
 import requests
 
+from .dbUtils import get_connection
 from .helper import get_location_with_geopy
 from .models import HardwareAssetsServiceNow
 
@@ -129,62 +131,169 @@ from .models import HardwareAssetsServiceNow
 
 @csrf_exempt
 def get_hardware_details(request):
-    url = f"{settings.SERVICENOW_URL}/api/now/table/{settings.SERVICENOW_TABLE}"
-    headers = {
-        "Accept": "application/json",
-    }
-    auth = (settings.SERVICENOW_USER, settings.SERVICENOW_PASSWORD)
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method. Use POST."}, status=405)
 
     try:
-        response = requests.get(url, headers=headers, auth=auth)
-        if response.status_code == 200:
-            data = response.json()
-            hardware_data = data.get("result", [])
+        body = json.loads(request.body)
+        token = body.get("token")
+        if token != settings.TOKEN_FROM_PHP:
+            raise Exception("Token not valid")
+        organization_id = body.get("org_id")
+        tool = body.get("tool")
 
-            filtered_hardware_data = []
-            for i in hardware_data:
-                inventory_number = i.get("asset_tag", "").strip()
-                item_name = i.get("display_name", "").strip()
-                warranty_info = i.get("warranty_expiration", "").strip()
-                serial_number = i.get("serial_number", "").strip()
-                purchase_date = parse_date(i.get("purchase_date", "")) if i.get("purchase_date") else None
-                current_value = float(i.get("cost", 0.0) or 0.0)
-                salvage_value = float(i.get("salvage_value", 0.0) or 0.0)
-                notes = i.get("work_notes", "").strip()
+        if not organization_id or not tool:
+            return JsonResponse({"error": "Missing required parameters: 'organization_id' and 'tool'."}, status=400)
 
-                if purchase_date:
-                    purchase_date = purchase_date.strftime('%Y-%m-%d')
+        connection = get_connection()
+        if not connection:
+            return JsonResponse({"error": "Failed to connect to the database."}, status=500)
 
-                filtered_hardware_data.append({
-                    "inventory_number": inventory_number,
-                    "item_name": item_name,
-                    "warranty_info": warranty_info,
-                    "serial_number": serial_number,
-                    "purchase_date": purchase_date,
-                    "current_value": current_value,
-                    "salvage_value": salvage_value,
-                    "notes": notes,
-                })
+        with connection.cursor(dictionary=True) as cursor:
+            query = """
+                SELECT * 
+                FROM compliance_integrations 
+                WHERE organization_id = %s AND tool = %s
+            """
+            cursor.execute(query, (organization_id, tool))
+            result = cursor.fetchall()
 
-            client = MongoClient(settings.MONGO_URI)
-            db = client[settings.MONGO_DB_NAME]
-            collection = db[settings.MONGO_COLLECTION_NAME]
+        if not result:
+            return JsonResponse({"error": "No matching compliance integrations found."}, status=404)
 
-            for item in filtered_hardware_data:
-                serial_number = item["serial_number"]
-                if serial_number:
-                    collection.update_one(
-                        {"serial_number": serial_number},
-                        {"$set": item},
-                        upsert=True
-                    )
+        api_credentials = json.loads(result[0].get("api_credentials", "{}"))
+        url = f"{api_credentials.get('api_url')}/api/now/table/{settings.SERVICENOW_TABLE}"
+        username = api_credentials.get("api_key")
+        password = api_credentials.get("api_end_ponit")
 
-            return JsonResponse({"status": "success", "total_objects": len(filtered_hardware_data)}, status=200)
+        if not url or not username or not password:
+            return JsonResponse({"error": "Invalid or missing API credentials."}, status=500)
 
-        return JsonResponse({"error": "Failed to fetch data from ServiceNow"}, status=response.status_code)
+        headers = {"Accept": "application/json"}
+        auth = (username, password)
 
-    except requests.RequestException as e:
-        return JsonResponse({"error": f"Failed to fetch data: {str(e)}"}, status=500)
+        try:
+            response = requests.get(url, headers=headers, auth=auth)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            return JsonResponse({"error": f"Failed to fetch data from ServiceNow: {str(e)}"}, status=500)
 
+        data = response.json()
+        hardware_data = data.get("result", [])
+
+        filtered_hardware_data = []
+        for item in hardware_data:
+            inventory_number = item.get("asset_tag", "").strip()
+            item_name = item.get("display_name", "").strip()
+            warranty_info = item.get("warranty_expiration", "").strip()
+            serial_number = item.get("serial_number", "").strip()
+            purchase_date = parse_date(item.get("purchase_date", "")) if item.get("purchase_date") else None
+            current_value = float(item.get("cost", 0.0) or 0.0)
+            salvage_value = float(item.get("salvage_value", 0.0) or 0.0)
+            notes = item.get("work_notes", "").strip()
+
+            if purchase_date:
+                purchase_date = purchase_date.strftime('%Y-%m-%d')
+
+            filtered_hardware_data.append({
+                "org_id": organization_id,
+                "inventory_number": inventory_number,
+                "item_name": item_name,
+                "warranty_info": warranty_info,
+                "serial_number": serial_number,
+                "purchase_date": purchase_date,
+                "current_value": current_value,
+                "salvage_value": salvage_value,
+                "notes": notes,
+            })
+
+        client = MongoClient(settings.MONGO_URI)
+        db = client[settings.MONGO_DB_NAME]
+        collection = db[settings.MONGO_COLLECTION_NAME]
+
+        new_count = 0
+        updated_count = 0
+
+        for item in filtered_hardware_data:
+            serial_number = item["serial_number"]
+            if serial_number:
+                existing = collection.find_one({"serial_number": serial_number})
+                if existing:
+                    # Compare the existing document with the new data
+                    if existing != item:
+                        collection.update_one(
+                            {"serial_number": serial_number},
+                            {"$set": item},
+                            upsert=False
+                        )
+                        updated_count += 1
+                else:
+                    collection.insert_one(item)
+                    new_count += 1
+
+        if new_count == 0 and updated_count == 0:
+            return JsonResponse({"status": "success", "message": "No new data or updates."}, status=200)
+
+        return JsonResponse({
+            "status": "success",
+            "new_data_count": new_count,
+            "updated_data_count": updated_count,
+            "total_objects": len(filtered_hardware_data)
+        }, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON payload."}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
+
+   
+@csrf_exempt
+def get_objects_by_org_id(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+
+    try:
+        body = json.loads(request.body)
+        token = body.get("token")
+        if token != settings.TOKEN_FROM_PHP:
+            raise Exception("Token not valid")
+        org_id = body.get("org_id")
+        tool = body.get("tool")
+
+        if not org_id or not tool:
+            return JsonResponse({"error": "Missing required parameters"}, status=400)
+
+        connection = get_connection()
+        if not connection:
+            return JsonResponse({"error": "Failed to connect to the database"}, status=500)
+
+        with connection.cursor(dictionary=True) as cursor:
+            query = """
+                SELECT * 
+                FROM compliance_integrations 
+                WHERE organization_id = %s AND tool = %s
+            """
+            cursor.execute(query, (org_id, tool))
+            result = cursor.fetchall()
+
+        if not result:
+            return JsonResponse({"error": "No matching data found"}, status=404)
+
+        api_credentials = json.loads(result[0].get("api_credentials"))
+        url = f"{api_credentials['api_url']}/api/now/table/{settings.SERVICENOW_TABLE}"
+        username = api_credentials["api_key"]
+        password = api_credentials["api_end_ponit"]
+        auth = (username, password)
+
+        client = MongoClient(settings.MONGO_URI)
+        db = client[settings.MONGO_DB_NAME]
+        collection = db[settings.MONGO_COLLECTION_NAME]
+        objects = collection.find({"org_id": org_id}, {"_id": 0})
+        objects_list = list(objects)
+
+        return JsonResponse({"status": "success", "data": objects_list}, status=200)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON payload"}, status=400)
     except Exception as e:
         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
