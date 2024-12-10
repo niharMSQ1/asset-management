@@ -13,121 +13,126 @@ import json
 import requests
 
 from .dbUtils import get_connection
+from .ezOfficeInventoryUtils import *
 from .helper import get_location_with_geopy
+from .invGateApiUtils import *
+from .ibmMaximoUtils import *
 from .models import HardwareAssetsServiceNow
+from .servicenowApiUtils import *
+from .zohoApiUtil import zoho_main
 
 
 # Create your views here.
-# @csrf_exempt
-# def get_hardware_details(request):
-#     url = f"{settings.SERVICENOW_URL}/api/now/table/{settings.SERVICENOW_TABLE}"
-#     headers = {
-#         "Accept": "application/json",
-#     }
-#     auth = (settings.SERVICENOW_USER, settings.SERVICENOW_PASSWORD)
+@csrf_exempt
+def get_hardware_details_and_save(request):
+    url = f"{settings.SERVICENOW_URL}/api/now/table/{settings.SERVICENOW_TABLE}"
+    headers = {
+        "Accept": "application/json",
+    }
+    auth = (settings.SERVICENOW_USER, settings.SERVICENOW_PASSWORD)
 
-#     try:
-#         response = requests.get(url, headers=headers, auth=auth)
-#         if response.status_code == 200:
-#             data = response.json()
-#             hardware_data = data.get("result", [])
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+        if response.status_code == 200:
+            data = response.json()
+            hardware_data = data.get("result", [])
             
-#             for i in hardware_data:
-#                 # Fetch and validate data from ServiceNow API
-#                 inventory_number = i.get("asset_tag", "").strip()
-#                 item_name = i.get("display_name", "").strip()
-#                 category = ""
-#                 try:
-#                     model_category_link = i.get("model_category", {}).get("link")
-#                     if model_category_link:
-#                         category_response = requests.get(model_category_link, headers=headers, auth=auth)
-#                         category = category_response.json().get("result", {}).get("name", "").strip()
-#                 except Exception:
-#                     category = ""
+            for i in hardware_data:
+                # Fetch and validate data from ServiceNow API
+                inventory_number = i.get("asset_tag", "").strip()
+                item_name = i.get("display_name", "").strip()
+                category = ""
+                try:
+                    model_category_link = i.get("model_category", {}).get("link")
+                    if model_category_link:
+                        category_response = requests.get(model_category_link, headers=headers, auth=auth)
+                        category = category_response.json().get("result", {}).get("name", "").strip()
+                except Exception:
+                    category = ""
 
-#                 location = ""
-#                 try:
-#                     location_link = i.get("location", {}).get("link")
-#                     if location_link:
-#                         location_response = requests.get(location_link, headers=headers, auth=auth)
-#                         location_data = location_response.json().get("result", {})
-#                         latitude = location_data.get("latitude")
-#                         longitude = location_data.get("longitude")
-#                         if latitude and longitude:
-#                             location = get_location_with_geopy(latitude, longitude)
-#                 except Exception:
-#                     location = ""
+                location = ""
+                try:
+                    location_link = i.get("location", {}).get("link")
+                    if location_link:
+                        location_response = requests.get(location_link, headers=headers, auth=auth)
+                        location_data = location_response.json().get("result", {})
+                        latitude = location_data.get("latitude")
+                        longitude = location_data.get("longitude")
+                        if latitude and longitude:
+                            location = get_location_with_geopy(latitude, longitude)
+                except Exception:
+                    location = ""
 
-#                 warranty_info = i.get("warranty_expiration", "").strip()
-#                 serial_number = i.get("serial_number", "").strip()
-#                 bank_loan = False  # Not available in ServiceNow response
-#                 purchase_date = parse_date(i.get("purchase_date", ""))
-#                 current_value = float(i.get("cost", 0.0) or 0.0)
-#                 salvage_value = float(i.get("salvage_value", 0.0) or 0.0)
-#                 notes = i.get("work_notes", "").strip()
-#                 depreciation_annual = 0.0
-#                 depreciation_monthly = 0.0
-#                 expected_life_years = 1
-#                 asset_end_date = None
+                warranty_info = i.get("warranty_expiration", "").strip()
+                serial_number = i.get("serial_number", "").strip()
+                bank_loan = False  # Not available in ServiceNow response
+                purchase_date = parse_date(i.get("purchase_date", ""))
+                current_value = float(i.get("cost", 0.0) or 0.0)
+                salvage_value = float(i.get("salvage_value", 0.0) or 0.0)
+                notes = i.get("work_notes", "").strip()
+                depreciation_annual = 0.0
+                depreciation_monthly = 0.0
+                expected_life_years = 1
+                asset_end_date = None
 
-#                 try:
-#                     depreciation_link = i.get("depreciation", {}).get("link")
-#                     if depreciation_link:
-#                         depreciation_response = requests.get(depreciation_link, headers=headers, auth=auth)
-#                         depreciation_data = depreciation_response.json().get("result", {})
-#                         expected_life_years = int(depreciation_data.get("depreciation_time", 1))
-#                         if expected_life_years > 0:
-#                             depreciation_annual = (current_value - salvage_value) / expected_life_years
-#                             depreciation_monthly = depreciation_annual / 12
-#                         if purchase_date:
-#                             asset_end_date = purchase_date + timedelta(days=expected_life_years * 365)
-#                 except Exception:
-#                     pass
+                try:
+                    depreciation_link = i.get("depreciation", {}).get("link")
+                    if depreciation_link:
+                        depreciation_response = requests.get(depreciation_link, headers=headers, auth=auth)
+                        depreciation_data = depreciation_response.json().get("result", {})
+                        expected_life_years = int(depreciation_data.get("depreciation_time", 1))
+                        if expected_life_years > 0:
+                            depreciation_annual = (current_value - salvage_value) / expected_life_years
+                            depreciation_monthly = depreciation_annual / 12
+                        if purchase_date:
+                            asset_end_date = purchase_date + timedelta(days=expected_life_years * 365)
+                except Exception:
+                    pass
 
-#                 months_to_replace = 36  # Example default, customize as per requirement
-#                 three_month_end_alert = (asset_end_date and asset_end_date - timedelta(days=90) <= date.today()) if asset_end_date else False
+                months_to_replace = 36  # Example default, customize as per requirement
+                three_month_end_alert = (asset_end_date and asset_end_date - timedelta(days=90) <= date.today()) if asset_end_date else False
 
 
-#                 # Prepare data for logging
-#                 saved_data = {
-#                     "inventory_number": inventory_number,
-#                     "item_name": item_name,
-#                     "category": category,
-#                     "location": location,
-#                     "warranty_info": warranty_info,
-#                     "serial_number": serial_number,
-#                     "bank_loan": bank_loan,
-#                     "purchase_date": purchase_date,
-#                     "expected_life_years": expected_life_years,
-#                     "asset_end_date": asset_end_date,
-#                     "months_to_replace": months_to_replace,
-#                     "three_month_end_alert": three_month_end_alert,
-#                     "purchase_price": current_value,
-#                     "end_of_life_expected_value": salvage_value,
-#                     "straight_line_depreciation_annual": depreciation_annual,
-#                     "straight_line_depreciation_monthly": depreciation_monthly,
-#                     "current_value": current_value,
-#                     "notes": notes,
-#                 }
+                # Prepare data for logging
+                saved_data = {
+                    "inventory_number": inventory_number,
+                    "item_name": item_name,
+                    "category": category,
+                    "location": location,
+                    "warranty_info": warranty_info,
+                    "serial_number": serial_number,
+                    "bank_loan": bank_loan,
+                    "purchase_date": purchase_date,
+                    "expected_life_years": expected_life_years,
+                    "asset_end_date": asset_end_date,
+                    "months_to_replace": months_to_replace,
+                    "three_month_end_alert": three_month_end_alert,
+                    "purchase_price": current_value,
+                    "end_of_life_expected_value": salvage_value,
+                    "straight_line_depreciation_annual": depreciation_annual,
+                    "straight_line_depreciation_monthly": depreciation_monthly,
+                    "current_value": current_value,
+                    "notes": notes,
+                }
 
-#                 # Log the data
-#                 print("Data being saved:", saved_data)
-#                 print("-" * 80)
+                # Log the data
+                print("Data being saved:", saved_data)
+                print("-" * 80)
 
-#                 # Save data to the model
-#                 HardwareAssetsServiceNow.objects.update_or_create(
-#                     inventory_number=inventory_number,
-#                     serial_number=serial_number,
-#                     defaults=saved_data,
-#                 )
+                # Save data to the model
+                HardwareAssetsServiceNow.objects.update_or_create(
+                    inventory_number=inventory_number,
+                    serial_number=serial_number,
+                    defaults=saved_data,
+                )
 
-#         return JsonResponse({"status": "success"}, status=200)
+        return JsonResponse({"status": "success"}, status=200)
 
-#     except requests.RequestException as e:
-#         return JsonResponse({"error": f"Failed to fetch data: {str(e)}"}, status=500)
+    except requests.RequestException as e:
+        return JsonResponse({"error": f"Failed to fetch data: {str(e)}"}, status=500)
 
-#     except Exception as e:
-#         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
+    except Exception as e:
+        return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
 
 @csrf_exempt
 def get_hardware_details(request):
@@ -136,117 +141,39 @@ def get_hardware_details(request):
 
     try:
         body = json.loads(request.body)
-        token = body.get("token")
+        token = body[0].get("token")
         if token != settings.TOKEN_FROM_PHP:
-            raise Exception("Token not valid")
-        organization_id = body.get("org_id")
-        tool = body.get("tool")
+            return JsonResponse({"error": "Token not valid"}, status=401)
+
+        organization_id = body[0].get("organization_id")
+        tool = body[0].get("tool")
 
         if not organization_id or not tool:
             return JsonResponse({"error": "Missing required parameters: 'organization_id' and 'tool'."}, status=400)
 
-        connection = get_connection()
-        if not connection:
-            return JsonResponse({"error": "Failed to connect to the database."}, status=500)
+        if tool == "ServiceNow":
+            response, status = fetch_and_store_servicenow_data(organization_id, tool, body)
+            return JsonResponse(response, status=status)
+        elif tool == "InvGate":
+            response, status = fetch_and_store_invGate_data(organization_id, tool, body)
+            return JsonResponse(response, status=status)
+        elif tool == "IBM-Maximo":
+            response, status = fetch_and_store_ibm_maximo_data(organization_id, tool, body="")
+            return JsonResponse(response, status=status)
+        elif tool == "ezofficeinventory":
+            response, status = fetch_and_store_ibm_ezofficeinventory_data(organization_id, tool, body)
+            return JsonResponse(response, status=status)
+        elif tool == "zoho":
+            response, status = zoho_main(organization_id, tool, body)
+            return JsonResponse(response, status=status)
 
-        with connection.cursor(dictionary=True) as cursor:
-            query = """
-                SELECT * 
-                FROM compliance_integrations 
-                WHERE organization_id = %s AND tool = %s
-            """
-            cursor.execute(query, (organization_id, tool))
-            result = cursor.fetchall()
-
-        if not result:
-            return JsonResponse({"error": "No matching compliance integrations found."}, status=404)
-
-        api_credentials = json.loads(result[0].get("api_credentials", "{}"))
-        url = f"{api_credentials.get('api_url')}/api/now/table/{settings.SERVICENOW_TABLE}"
-        username = api_credentials.get("api_key")
-        password = api_credentials.get("api_end_ponit")
-
-        if not url or not username or not password:
-            return JsonResponse({"error": "Invalid or missing API credentials."}, status=500)
-
-        headers = {"Accept": "application/json"}
-        auth = (username, password)
-
-        try:
-            response = requests.get(url, headers=headers, auth=auth)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            return JsonResponse({"error": f"Failed to fetch data from ServiceNow: {str(e)}"}, status=500)
-
-        data = response.json()
-        hardware_data = data.get("result", [])
-
-        filtered_hardware_data = []
-        for item in hardware_data:
-            inventory_number = item.get("asset_tag", "").strip()
-            item_name = item.get("display_name", "").strip()
-            warranty_info = item.get("warranty_expiration", "").strip()
-            serial_number = item.get("serial_number", "").strip()
-            purchase_date = parse_date(item.get("purchase_date", "")) if item.get("purchase_date") else None
-            current_value = float(item.get("cost", 0.0) or 0.0)
-            salvage_value = float(item.get("salvage_value", 0.0) or 0.0)
-            notes = item.get("work_notes", "").strip()
-
-            if purchase_date:
-                purchase_date = purchase_date.strftime('%Y-%m-%d')
-
-            filtered_hardware_data.append({
-                "org_id": organization_id,
-                "inventory_number": inventory_number,
-                "item_name": item_name,
-                "warranty_info": warranty_info,
-                "serial_number": serial_number,
-                "purchase_date": purchase_date,
-                "current_value": current_value,
-                "salvage_value": salvage_value,
-                "notes": notes,
-            })
-
-        client = MongoClient(settings.MONGO_URI)
-        db = client[settings.MONGO_DB_NAME]
-        collection = db[settings.MONGO_COLLECTION_NAME]
-
-        new_count = 0
-        updated_count = 0
-
-        for item in filtered_hardware_data:
-            serial_number = item["serial_number"]
-            if serial_number:
-                existing = collection.find_one({"serial_number": serial_number})
-                if existing:
-                    # Compare the existing document with the new data
-                    if existing != item:
-                        collection.update_one(
-                            {"serial_number": serial_number},
-                            {"$set": item},
-                            upsert=False
-                        )
-                        updated_count += 1
-                else:
-                    collection.insert_one(item)
-                    new_count += 1
-
-        if new_count == 0 and updated_count == 0:
-            return JsonResponse({"status": "success", "message": "No new data or updates."}, status=200)
-
-        return JsonResponse({
-            "status": "success",
-            "new_data_count": new_count,
-            "updated_data_count": updated_count,
-            "total_objects": len(filtered_hardware_data)
-        }, status=200)
+        return JsonResponse({"error": f"Unsupported tool: {tool}"}, status=400)
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON payload."}, status=400)
     except Exception as e:
         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
 
-   
 @csrf_exempt
 def get_objects_by_org_id(request):
     if request.method != "GET":
@@ -254,46 +181,50 @@ def get_objects_by_org_id(request):
 
     try:
         body = json.loads(request.body)
-        token = body.get("token")
+        token = body[0].get("token")
         if token != settings.TOKEN_FROM_PHP:
             raise Exception("Token not valid")
-        org_id = body.get("org_id")
-        tool = body.get("tool")
+        org_id = body[0].get("organization_id")
+        tool = body[0].get("tool")
 
         if not org_id or not tool:
             return JsonResponse({"error": "Missing required parameters"}, status=400)
+        
+        if tool =="Servicenow":
 
-        connection = get_connection()
-        if not connection:
-            return JsonResponse({"error": "Failed to connect to the database"}, status=500)
+            connection = get_connection()
+            if not connection:
+                return JsonResponse({"error": "Failed to connect to the database"}, status=500)
 
-        with connection.cursor(dictionary=True) as cursor:
-            query = """
-                SELECT * 
-                FROM compliance_integrations 
-                WHERE organization_id = %s AND tool = %s
-            """
-            cursor.execute(query, (org_id, tool))
-            result = cursor.fetchall()
+            with connection.cursor(dictionary=True) as cursor:
+                query = """
+                    SELECT * 
+                    FROM compliance_integrations 
+                    WHERE organization_id = %s AND tool = %s
+                """
+                cursor.execute(query, (org_id, tool))
+                result = cursor.fetchall()
 
-        if not result:
-            return JsonResponse({"error": "No matching data found"}, status=404)
+            if not result:
+                return JsonResponse({"error": "No matching data found"}, status=404)
 
-        api_credentials = json.loads(result[0].get("api_credentials"))
-        url = f"{api_credentials['api_url']}/api/now/table/{settings.SERVICENOW_TABLE}"
-        username = api_credentials["api_key"]
-        password = api_credentials["api_end_ponit"]
-        auth = (username, password)
+            api_credentials = json.loads(result[0].get("api_credentials"))
+            url = f"{api_credentials['api_url']}/api/now/table/{settings.SERVICENOW_TABLE}"
+            username = api_credentials["api_key"]
+            password = api_credentials["api_end_ponit"]
+            auth = (username, password)
 
-        client = MongoClient(settings.MONGO_URI)
-        db = client[settings.MONGO_DB_NAME]
-        collection = db[settings.MONGO_COLLECTION_NAME]
-        objects = collection.find({"org_id": org_id}, {"_id": 0})
-        objects_list = list(objects)
+            client = MongoClient(settings.MONGO_URI)
+            db = client[settings.MONGO_DB_NAME]
+            collection = db[settings.MONGO_COLLECTION_NAME]
+            objects = collection.find({"org_id": org_id}, {"_id": 0})
+            objects_list = list(objects)
 
-        return JsonResponse({"status": "success", "data": objects_list}, status=200)
+            return JsonResponse({"status": "success", "data": objects_list}, status=200)
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON payload"}, status=400)
     except Exception as e:
         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
+    
+    

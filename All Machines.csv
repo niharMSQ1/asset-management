@@ -1,0 +1,88 @@
+Serial,Name,Type,Operating System,Status,Service Date
+1,Mac Book Pro,Computer,MAC OS,Active,31-Dec-2024
+2,Dell XPS,Computer,Windows 11,Active,15-Jan-2025
+3,HP Pavilion,Computer,Windows 10,Active,20-Feb-2025
+4,Lenovo ThinkPad,Computer,Linux,Active,18-Mar-2025
+5,Acer Aspire,Computer,Windows 11,Active,23-Apr-2025
+6,Asus ROG,Computer,Windows 10,Active,30-May-2025
+7,Mac Mini,Computer,MAC OS,Active,10-Jun-2025
+8,MacBook Air,Computer,MAC OS,Active,19-Jul-2025
+9,Dell Inspiron,Computer,Windows 10,Active,25-Aug-2025
+10,HP Envy,Computer,Windows 11,Active,12-Sep-2025
+11,Lenovo Yoga,Computer,Linux,Active,04-Oct-2025
+12,Acer Nitro,Computer,Windows 11,Active,20-Nov-2025
+13,Asus ZenBook,Computer,Windows 10,Active,31-Dec-2025
+14,Mac Studio,Computer,MAC OS,Active,22-Jan-2026
+15,iMac Pro,Computer,MAC OS,Active,05-Feb-2026
+16,Dell Latitude,Computer,Windows 10,Active,14-Mar-2026
+17,HP Spectre,Computer,Windows 11,Active,25-Apr-2026
+18,Lenovo Legion,Computer,Linux,Active,09-May-2026
+19,Acer Swift,Computer,Windows 11,Active,27-Jun-2026
+20,Asus VivoBook,Computer,Windows 10,Active,30-Jul-2026
+21,Mac Pro,Computer,MAC OS,Active,14-Aug-2026
+22,Surface Laptop,Computer,Windows 11,Active,10-Sep-2026
+23,Surface Pro,Computer,Windows 10,Active,03-Oct-2026
+24,Dell Precision,Computer,Linux,Active,28-Nov-2026
+25,HP Omen,Computer,Windows 11,Active,12-Dec-2026
+26,Lenovo Ideapad,Computer,Windows 10,Active,22-Jan-2027
+27,Acer Predator,Computer,Windows 11,Active,14-Feb-2027
+28,Asus TUF,Computer,Linux,Active,09-Mar-2027
+29,MacBook 12,Computer,MAC OS,Active,17-Apr-2027
+30,Dell Vostro,Computer,Windows 10,Active,29-May-2027
+31,HP ProBook,Computer,Windows 11,Active,18-Jun-2027
+32,Lenovo Carbon X1,Computer,Linux,Active,24-Jul-2027
+33,Acer Chromebook,Computer,Chrome OS,Active,11-Aug-2027
+34,Asus Chromebook,Computer,Chrome OS,Active,02-Sep-2027
+35,MacBook Classic,Computer,MAC OS,Active,26-Oct-2027
+36,iMac 24-inch,Computer,MAC OS,Active,14-Nov-2027
+37,Dell Alienware,Computer,Windows 11,Active,30-Dec-2027
+38,HP EliteBook,Computer,Windows 10,Active,20-Jan-2028
+39,Lenovo Slim 7,Computer,Linux,Active,09-Feb-2028
+40,Acer Spin,Computer,Windows 11,Active,03-Mar-2028
+41,Asus Flip,Computer,Windows 10,Active,18-Apr-2028
+42,MacBook 13-inch,Computer,MAC OS,Active,22-May-2028
+43,Dell G5,Computer,Windows 11,Active,10-Jun-2028
+44,HP ZBook,Computer,Windows 10,Active,07-Jul-2028
+45,Lenovo 100e,Computer,Linux,Active,30-Aug-2028
+46,Acer ConceptD,Computer,Windows 11,Active,15-Sep-2028
+47,Asus ProArt,Computer,Windows 10,Active,02-Oct-2028
+48,MacBook 15-inch,Computer,MAC OS,Active,17-Nov-2028
+49,Surface Go,Computer,Windows 10,Active,30-Dec-2028
+50,Dell Studio,Computer,Linux,Active,14-Jan-2029
+51,HP Workstation,Computer,Windows 11,Active,03-Feb-2029
+52,Lenovo ThinkCentre,Computer,Linux,Active,28-Mar-2029
+53,Acer One,Computer,Windows 11,Active,16-Apr-2029
+54,Asus Eee PC,Computer,Windows 10,Active,23-May-2029
+55,Mac Classic,Computer,MAC OS,Active,18-Jun-2029
+56,Dell Chromebook,Computer,Chrome OS,Active,09-Jul-2029
+57,HP Chromebook,Computer,Chrome OS,Active,22-Aug-2029
+58,Lenovo Chromebook,Computer,Chrome OS,Active,04-Sep-2029
+59,Acer Chromebox,Computer,Chrome OS,Active,19-Oct-2029
+60,Asus Chromebox,Computer,Chrome OS,Active,30-Nov-2029
+61,Mac Cube,Computer,MAC OS,Active,15-Dec-2029
+62,Dell XPS 13,Computer,Windows 10,Active,12-Jan-2030
+63,HP Stream,Computer,Windows 11,Active,03-Feb-2030
+64,Lenovo M Series,Computer,Linux,Active,25-Mar-2030
+65,Acer Extensa,Computer,Windows 11,Active,07-Apr-2030
+66,Asus ROG Flow,Computer,Windows 10,Active,20-May-2030
+67,MacBook Plus,Computer,MAC OS,Active,14-Jun-2030
+68,Dell XPS 15,Computer,Windows 10,Active,05-Jul-2030
+69,HP Pavilion Gaming,Computer,Windows 11,Active,01-Aug-2030
+70,Lenovo V Series,Computer,Linux,Active,18-Sep-2030
+71,Acer Helios,Computer,Windows 11,Active,27-Oct-2030
+72,Asus Zephyrus,Computer,Windows 10,Active,11-Nov-2030
+73,Mac Studio M1,Computer,MAC OS,Active,21-Dec-2030
+74,Surface Laptop Studio,Computer,Windows 11,Active,30-Jan-2031
+75,Surface Book 3,Computer,Windows 10,Active,17-Feb-2031
+76,Dell OptiPlex,Computer,Linux,Active,08-Mar-2031
+77,HP Mini,Computer,Windows 11,Active,25-Apr-2031
+78,Lenovo Tiny,Computer,Linux,Active,15-May-2031
+79,Acer TravelMate,Computer,Windows 10,Active,03-Jun-2031
+80,Asus VivoStick,Computer,Windows 11,Active,22-Jul-2031
+81,Mac Pro Tower,Computer,MAC OS,Active,13-Aug-2031
+82,Dell Aurora,Computer,Windows 10,Active,29-Sep-2031
+83,HP Chromebook 14,Computer,Chrome OS,Active,19-Oct-2031
+84,Lenovo Chromebook Duet,Computer,Chrome OS,Active,07-Nov-2031
+85,Acer C720,Computer,Chrome OS,Active,28-Dec-2031
+86,Asus C300,Computer,Chrome OS,Active,15-Jan-2032
+87,MacBook Air Retina,Computer,MAC OS,Active,06-Feb-2032

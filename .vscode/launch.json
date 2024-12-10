@@ -6,15 +6,36 @@
     "configurations": [
         {
             "name": "Python Debugger: Django",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
             "args": [
                 "runserver",
-                "8002"
+                "0.0.0.0:8002"
             ],
             "django": true,
-            "autoStartBrowser": false,
-            "program": "${workspaceFolder}\\manage.py"
+            "justMyCode": true,
+            "autoReload": true
         }
     ]
 }
+
+
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//       {
+//         "name": "Python Debugger: Django",
+//         "type": "python",
+//         "request": "launch",
+//         "program": "${workspaceFolder}/manage.py",
+//         "args": [
+//           "runserver",
+//           "localhost:8000"  // Change here
+//         ],
+//         "django": true,
+//         "justMyCode": true,
+//         "autoReload": true
+//       }
+//     ]
+//   }

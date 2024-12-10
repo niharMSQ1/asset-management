@@ -3,5 +3,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/servicenow-assets/', include("servicenow.urls")),
+    path('api/', include("servicenow.urls")),
 ]
