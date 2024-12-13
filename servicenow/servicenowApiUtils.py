@@ -1,5 +1,5 @@
 import requests
-import json
+import socket, json
 from pymongo import MongoClient
 from django.http import JsonResponse
 from django.conf import settings
@@ -25,9 +25,9 @@ def fetch_and_store_servicenow_data(organization_id, tool, body):
         # if not result:
         #     return {"error": "No matching compliance integrations found."}, 404
 
-        url = body[0].get("url") +"/api/now/table/"+settings.SERVICENOW_TABLE
-        username =  body[0].get("api_end_ponit")
-        password = body[0].get("api_key")
+        url = ((body[0]).get("credentials").get("url")) +"/api/now/table/"+settings.SERVICENOW_TABLE
+        username =  ((body[0]).get("credentials").get("api_end_ponit"))
+        password = ((body[0]).get("credentials").get("api_key"))
 
         if not url or not username or not password:
             return {"error": "Invalid or missing API credentials."}, 500
@@ -94,10 +94,10 @@ def fetch_and_store_servicenow_data(organization_id, tool, body):
             "status": "success",
             "new_data_count": new_count,
             "updated_data_count": updated_count,
-            "total_objects": len(filtered_hardware_data)
+            "data": hardware_data
         }, 200
-
     except requests.RequestException as e:
-        return {"error": f"Failed to fetch data from ServiceNow: {str(e)}"}, 500
+        return {"error": str(e)}, 401 
     except Exception as e:
-        return {"error": f"An error occurred: {str(e)}"}, 500
+        return {"error": f"An error occurred: {str(e)}"}, response.status_code
+    

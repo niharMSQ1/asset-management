@@ -19,7 +19,7 @@ from .invGateApiUtils import *
 from .ibmMaximoUtils import *
 from .models import HardwareAssetsServiceNow
 from .servicenowApiUtils import *
-from .zohoApiUtil import zoho_main
+from .zohoApiUtil import *
 
 
 # Create your views here.
@@ -142,18 +142,42 @@ def get_hardware_details(request):
     try:
         body = json.loads(request.body)
         token = body[0].get("token")
-        if token != settings.TOKEN_FROM_PHP:
+        if token != settings.ACCESS_TOKEN_PY:
             return JsonResponse({"error": "Token not valid"}, status=401)
 
-        organization_id = body[0].get("organization_id")
+        organization_id = body[0].get("organization_id") if body[0].get("organization_id") else "NA"
         tool = body[0].get("tool")
 
         if not organization_id or not tool:
             return JsonResponse({"error": "Missing required parameters: 'organization_id' and 'tool'."}, status=400)
 
-        if tool == "ServiceNow":
+        if tool == "servicenow":
             response, status = fetch_and_store_servicenow_data(organization_id, tool, body)
-            return JsonResponse(response, status=status)
+            if status == 200:
+                return JsonResponse(
+                    {
+                        "message": response,
+                        "Status": response.get("status")
+                    },
+                    status=status
+                )
+                
+            # elif status == 401:
+            #     return JsonResponse(
+            #         {
+            #             "message": response.get("error"),
+            #             "Status": "Failed"
+            #         },
+            #         status=status pause1
+            #     )
+            elif status ==  401 or status ==  500:
+                return JsonResponse(
+                    {
+                        "message": "Please enter correct details",
+                        "status": "Failed"
+                    },
+                    status=status
+                )
         elif tool == "InvGate":
             response, status = fetch_and_store_invGate_data(organization_id, tool, body)
             return JsonResponse(response, status=status)
@@ -164,6 +188,7 @@ def get_hardware_details(request):
             response, status = fetch_and_store_ibm_ezofficeinventory_data(organization_id, tool, body)
             return JsonResponse(response, status=status)
         elif tool == "zoho":
+            
             response, status = zoho_main(organization_id, tool, body)
             return JsonResponse(response, status=status)
 
@@ -190,7 +215,7 @@ def get_objects_by_org_id(request):
         if not org_id or not tool:
             return JsonResponse({"error": "Missing required parameters"}, status=400)
         
-        if tool =="Servicenow":
+        if tool =="servicenow":
 
             connection = get_connection()
             if not connection:
@@ -202,6 +227,7 @@ def get_objects_by_org_id(request):
                     FROM compliance_integrations 
                     WHERE organization_id = %s AND tool = %s
                 """
+                
                 cursor.execute(query, (org_id, tool))
                 result = cursor.fetchall()
 
@@ -221,6 +247,9 @@ def get_objects_by_org_id(request):
             objects_list = list(objects)
 
             return JsonResponse({"status": "success", "data": objects_list}, status=200)
+        
+        # elif tool == "zoho":
+            
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON payload"}, status=400)
@@ -228,3 +257,38 @@ def get_objects_by_org_id(request):
         return JsonResponse({"error": f"An error occurred: {str(e)}"}, status=500)
     
     
+@csrf_exempt
+def validate_tool_credentials(request):
+    body = json.loads(request.body)
+    
+    if (body[0]).get("tool") == "zoho":
+        client_id = ((body[0]).get("credentials")).get("CLIENT_ID")
+        client_secret = ((body[0]).get("credentials")).get("CLIENT_SECRET")
+        domain = auth_code = ((body[0]).get("credentials")).get("domain")
+        
+        data = [{
+            "AUTH_CODE":(body[0]['credentials']).get("AUTH_CODE"),
+            "CLIENT_ID":client_id,
+            "CLIENT_SECRET":client_secret
+        }]
+        
+        req = generate_access_refresh_token_zoho(data)
+        
+        if "access_token" in req:
+        
+            return JsonResponse({
+                "Status":"Success",
+                "data": {
+                    "client_id":client_id,
+                    "client_secret":client_secret,
+                    "url":domain,
+                    "refresh_token":req.get('refresh_token'),
+                    "access_token":req.get('access_token')
+                }
+                
+            },status = 200)
+        else:
+            return JsonResponse({
+                "Status":"Failed",
+                
+            },status = 500)

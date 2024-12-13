@@ -8,7 +8,7 @@ SECRET_KEY = 'django-insecure-@_xgtip=@)ou&ag0^j2a3(+fk1%8euma@k&rz7&7-@jep5cgo&
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["efee-14-195-33-10.ngrok-free.app","localhost"]
 
 DATABASE_ROUTERS = ['itsmOperations.routers.ServiceNowRouter']
 
@@ -129,7 +129,7 @@ MONGO_DB_NAME = config('MONGO_DB_NAME')
 MONGO_COLLECTION_NAME = config('MONGO_COLLECTION_NAME')
 
 
-TOKEN_FROM_PHP = config("ACCESS_TOKEN_PY")
+ACCESS_TOKEN_PY = config("ACCESS_TOKEN_PY")
 
 
 IBM_MAXIMO_URL = config("IBM_MAXIMO_URL")
