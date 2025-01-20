@@ -1,7 +1,7 @@
 import requests
 from django.http import JsonResponse
 
-def fetch_and_store_ibm_ezofficeinventory_data(organization_id, tool, body):
+def fetch_and_store_ezofficeinventory_data(organization_id, tool, body):
     API_KEY = (body[0]).get("company_token")
     SUBDOMAIN = (body[0]).get("subdomain")
     url = f"{SUBDOMAIN}/assets.api"

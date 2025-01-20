@@ -4,13 +4,13 @@ from pymongo import MongoClient
 from django.http import JsonResponse
 from django.conf import settings
 from dateutil.parser import parse as parse_date
-from .dbUtils import get_connection 
+from ..dbUtils import get_connection 
 
 
 def fetch_and_store_servicenow_data(organization_id, tool, body):
-    # connection = get_connection()
-    # if not connection:
-    #     return {"error": "Failed to connect to the database."}, 500
+    connection = get_connection()
+    if not connection:
+        return {"error": "Failed to connect to the database."}, 500
 
     try:
         # with connection.cursor(dictionary=True) as cursor:
@@ -69,7 +69,7 @@ def fetch_and_store_servicenow_data(organization_id, tool, body):
 
         client = MongoClient(settings.MONGO_URI)
         db = client[settings.MONGO_DB_NAME]
-        collection = db[settings.MONGO_COLLECTION_NAME]
+        collection = db[settings.MONGO_COLLECTION_NAME_FOR_ASSETS]
 
         new_count = 0
         updated_count = 0

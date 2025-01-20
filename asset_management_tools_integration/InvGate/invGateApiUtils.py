@@ -4,7 +4,7 @@ import requests
 from dateutil.parser import parse as parse_date
 from pymongo import MongoClient
 from django.http import JsonResponse
-from .dbUtils import get_connection
+from .. import dbUtils
 from django.conf import settings
 
 def fetch_and_store_invGate_data(organization_id, tool, body):
@@ -67,7 +67,7 @@ def fetch_and_store_invGate_data(organization_id, tool, body):
             
             client = MongoClient(settings.MONGO_URI)
             db = client[settings.MONGO_DB_NAME]
-            collection = db[settings.MONGO_COLLECTION_NAME]
+            collection = db[settings.MONGO_COLLECTION_NAME_FOR_ASSETS]
             
             new_count = 0
             updated_count = 0
