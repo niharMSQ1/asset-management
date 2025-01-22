@@ -27,6 +27,7 @@ from .Asset_Sonar.assetSonarUtils import *
 from .Upkeep.upKeepUtils import *
 from .SuperOps.SuperOpsUtils import *
 from .ConnectTeam.connectTeamUtils import *
+from .Workable.workableUtils import *
 
 
 # from .models import HardwareAssetsServiceNow
@@ -101,6 +102,10 @@ def get_hardware_details(request):
         
         elif tool == "ConnectTeam":
             response, status = connect_team_main(organization_id, tool, body)
+            return JsonResponse(response, status=status)
+        
+        elif tool == "Workable":
+            response,status = workableMain(organization_id, tool, body)
             return JsonResponse(response, status=status)
 
         
