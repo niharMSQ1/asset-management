@@ -25,6 +25,8 @@ from .Asset_Infinity.assetInfinity import *
 from .EZ_Office_Inventory.ezOfficeInventoryUtils import *
 from .Asset_Sonar.assetSonarUtils import *
 from .Upkeep.upKeepUtils import *
+from .SuperOps.SuperOpsUtils import *
+from .ConnectTeam.connectTeamUtils import *
 
 
 # from .models import HardwareAssetsServiceNow
@@ -92,6 +94,15 @@ def get_hardware_details(request):
         elif tool == "UpKeep":
             response, status = upkeep_main(organization_id, tool, body)
             return JsonResponse(response, status=status)
+        
+        elif tool == "SuperOps":
+            response, status = superops_main(organization_id, tool, body)
+            return JsonResponse(response, status=status)
+        
+        elif tool == "ConnectTeam":
+            response, status = connect_team_main(organization_id, tool, body)
+            return JsonResponse(response, status=status)
+
         
         # elif tool == "odooAssets":
         #     response, status = odooAssetInventry(organization_id, tool, body)
