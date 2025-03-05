@@ -8,16 +8,16 @@ from .. import dbUtils
 from django.conf import settings
 
 def fetch_and_store_invGate_data(organization_id, tool, body):
-    token_url = f"{body[0]["INVGATE_URL"]}/oauth2/token/"
-    assets_url = f"{body[0]["INVGATE_URL"]}/public-api/v2/assets-lite/"
+    token_url = f"{body[0]["invgate_url"]}/oauth2/token/"
+    assets_url = f"{body[0]["invgate_url"]}/public-api/v2/assets-lite/"
     
     try:
         token_response = requests.post(
             token_url,
             params={
                 "grant_type": "client_credentials",
-                "client_id": body[0]["INVGATE_CLIENT_ID"],
-                "client_secret": body[0]["INVGATE_CLIENT_SECRET"]
+                "client_id": body[0]["invgate_client_id"],
+                "client_secret": body[0]["invgate_client_secret"]
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"}  # Adjust content type if required
         )
@@ -67,7 +67,7 @@ def fetch_and_store_invGate_data(organization_id, tool, body):
             
             client = MongoClient(settings.MONGO_URI)
             db = client[settings.MONGO_DB_NAME]
-            collection = db[settings.MONGO_COLLECTION_NAME_FOR_ASSETS]
+            collection = db[settings.MONGO_COLLECTION_NAME_FOR_ASSETS_FOR_ASSETS]
             
             new_count = 0
             updated_count = 0
@@ -94,8 +94,6 @@ def fetch_and_store_invGate_data(organization_id, tool, body):
                 "updated_data_count": updated_count,
                 "total_objects": len(filtered_hardware_data)
             }, 200
-            
-            return assets_response.json()
         else:
             return {"error": "Failed to retrieve assets", "details": assets_response.json()}
     
